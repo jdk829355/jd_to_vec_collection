@@ -7,3 +7,6 @@ def collect_data():
 @flow(name="data collection pipeline")
 def data_collection_pipeline():
     collect_data()
+
+if __name__ == "__main__":
+    data_collection_pipeline()
