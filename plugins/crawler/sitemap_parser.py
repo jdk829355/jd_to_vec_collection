@@ -1,10 +1,11 @@
 import asyncio
+import logging
 from xml.etree import ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from http_fetch import fetch
 
 
-
+logger = logging.getLogger(__name__)
 
 async def get_urls(last_mod_standard: datetime|None=None) -> list[str]:
     if last_mod_standard is not None:
@@ -27,6 +28,7 @@ async def get_urls(last_mod_standard: datetime|None=None) -> list[str]:
             lastmod = datetime.strptime(lastmod, "%Y-%m-%dT%H:%M:%S%z")
             if last_mod_standard is None or lastmod > last_mod_standard:
                 urls.append(url)
+    logger.info(f"Found {len(urls)} URLs in the sitemap that are modified after {last_mod_standard}")
     return urls
 
 
