@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlalchemy.dialects.postgresql import insert
 from dotenv import load_dotenv
-import logging
+from prefect import get_run_logger
 from plugins.db.database import DbSession
 from schemas.announcement_schema import AnnouncementSchema, AiAnnouncementResponse
 from uuid import uuid4
@@ -10,9 +10,14 @@ from schemas.db_model import Announcement, AnnouncementRequirement, Requirements
 
 load_dotenv()
 
-def get_last_modified_standard() -> datetime|None:
+
+def get_last_modified_standard() -> datetime | None:
     session = DbSession()
-    last_modified = session.query(Announcement.created_at).order_by(Announcement.created_at.desc()).first()
+    last_modified = (
+        session.query(Announcement.created_at)
+        .order_by(Announcement.created_at.desc())
+        .first()
+    )
     session.close()
     if last_modified:
         res = datetime.combine(last_modified[0], datetime.min.time())
@@ -20,15 +25,27 @@ def get_last_modified_standard() -> datetime|None:
     else:
         return None
 
-def remove_existing_url(url_and_last_mods: list[tuple[str, datetime]]) -> list[tuple[str, datetime]]:
+
+def remove_existing_url(
+    url_and_last_mods: list[tuple[str, datetime]],
+) -> list[tuple[str, datetime]]:
     session = DbSession()
-    existing_urls = session.query(Announcement.url).filter(Announcement.url.in_( [url for url, _ in url_and_last_mods] )).all()
+    existing_urls = (
+        session.query(Announcement.url)
+        .filter(Announcement.url.in_([url for url, _ in url_and_last_mods]))
+        .all()
+    )
     existing_urls = {url for (url,) in existing_urls}
     session.close()
-    return [url_and_last_mod for url_and_last_mod in url_and_last_mods if url_and_last_mod[0] not in existing_urls]
+    return [
+        url_and_last_mod
+        for url_and_last_mod in url_and_last_mods
+        if url_and_last_mod[0] not in existing_urls
+    ]
+
 
 def insert_announcements(data: list[tuple[AnnouncementSchema, AiAnnouncementResponse]]):
-    logger = logging.getLogger(__name__)
+    logger = get_run_logger()
     db = DbSession()
 
     data_to_insert = []
@@ -48,32 +65,30 @@ def insert_announcements(data: list[tuple[AnnouncementSchema, AiAnnouncementResp
         )
         for requirement in ai_response.requirements:
             announcement_requirement_to_insert.append(
-                {
-                    "announcement_id": announcement_id,
-                    "requirement_name": requirement
-                }
+                {"announcement_id": announcement_id, "requirement_name": requirement}
             )
 
-            requirement_to_insert.append(
-                {
-                    "name": requirement
-                }
-            )
+            requirement_to_insert.append({"name": requirement})
     try:
         stmt = insert(Announcement).values(data_to_insert)
-        stmt = stmt.on_conflict_do_nothing(index_elements=['id'])
+        stmt = stmt.on_conflict_do_nothing(index_elements=["id"])
         db.execute(stmt)
 
         stmt = insert(Requirements).values(requirement_to_insert)
-        stmt = stmt.on_conflict_do_nothing(index_elements=['name'])
+        stmt = stmt.on_conflict_do_nothing(index_elements=["name"])
         db.execute(stmt)
 
-        stmt = insert(AnnouncementRequirement).values(announcement_requirement_to_insert)
-        stmt = stmt.on_conflict_do_nothing(index_elements=['announcement_id', 'requirement_name'])
+        stmt = insert(AnnouncementRequirement).values(
+            announcement_requirement_to_insert
+        )
+        stmt = stmt.on_conflict_do_nothing(
+            index_elements=["announcement_id", "requirement_name"]
+        )
         db.execute(stmt)
 
-        logger.info(f"PostgreSQL 삽입 성공: {len(data_to_insert)} 개의 포스트 삽입 시도")
-
+        logger.info(
+            f"PostgreSQL 삽입 성공: {len(data_to_insert)} 개의 포스트 삽입 시도"
+        )
 
         db.commit()
     except Exception as e:
@@ -81,6 +96,7 @@ def insert_announcements(data: list[tuple[AnnouncementSchema, AiAnnouncementResp
         db.rollback()
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     load_dotenv()
