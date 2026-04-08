@@ -2,12 +2,12 @@ import asyncio
 import logging
 from xml.etree import ElementTree as ET
 from datetime import datetime, timedelta, timezone
-from http_fetch import fetch
+from plugins.crawler.http_fetch import fetch
 
 
 logger = logging.getLogger(__name__)
 
-async def get_urls(last_mod_standard: datetime|None=None) -> list[str]:
+async def get_urls(last_mod_standard: datetime|None=None) -> list[tuple[str, datetime]]:
     if last_mod_standard is not None:
         last_mod_standard = last_mod_standard.replace(tzinfo=timezone(timedelta(hours=9))) # 한국 시간대에 맞게 설정
 
@@ -19,17 +19,19 @@ async def get_urls(last_mod_standard: datetime|None=None) -> list[str]:
     root = ET.fromstring(sitemap_data)
     url_dates = root.findall(f"{NS}url")
     urls = []
+    last_mod = []
     for url_date in url_dates:
         url = url_date.find(f"{NS}loc") if url_date.find(f"{NS}loc") is not None else None
         lastmod = url_date.find(f"{NS}lastmod") if url_date.find(f"{NS}lastmod") is not None else None
 
         if url is not None and lastmod is not None:
             url, lastmod = url.text, lastmod.text # type: ignore
-            lastmod = datetime.strptime(lastmod, "%Y-%m-%dT%H:%M:%S%z")
+            lastmod = datetime.strptime(lastmod, "%Y-%m-%dT%H:%M:%S%z") # type: ignore
             if last_mod_standard is None or lastmod > last_mod_standard:
                 urls.append(url)
+                last_mod.append(lastmod)
     logger.info(f"Found {len(urls)} URLs in the sitemap that are modified after {last_mod_standard}")
-    return urls
+    return [x for x in zip(urls, last_mod)]
 
 
 if __name__ == "__main__":

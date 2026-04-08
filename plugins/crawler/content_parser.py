@@ -4,7 +4,7 @@ from plugins.crawler.http_fetch import fetch
 from bs4 import BeautifulSoup
 import logging
 
-from schemas.announcement_schema import Announcement
+from schemas.announcement_schema import AnnouncementSchema
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def get_section_content(soup, section_name):
                 
     return "해당 내용을 찾을 수 없습니다."
 
-async def parse_content(url: str, last_modified: str) -> Announcement:
+async def parse_content(url: str, last_modified: str) -> AnnouncementSchema:
     html_data = await fetch([url])
     html_data = html_data[0]
     soup = BeautifulSoup(html_data, 'html.parser')
@@ -40,7 +40,7 @@ async def parse_content(url: str, last_modified: str) -> Announcement:
     company_tag = soup.select_one('a.name span')
     company_name = company_tag.get_text(strip=True) if company_tag else "회사명 없음"
 
-    announcement = Announcement(
+    announcement = AnnouncementSchema(
         title=title,
         content=content,
         date=last_modified,
