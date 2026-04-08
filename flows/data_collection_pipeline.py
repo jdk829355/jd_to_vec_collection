@@ -47,7 +47,7 @@ def filter_existing_urls(
     return filtered_urls
 
 
-@task(name="parse content from url")
+@task(name="parse content from url", retries=2, retry_delay_seconds=5)
 async def parse_content_from_url(
     url_and_last_mod: tuple[str, datetime],
 ) -> AnnouncementSchema:
@@ -60,7 +60,7 @@ async def parse_content_from_url(
     return announcement
 
 
-@task(name="get ai response")
+@task(name="get ai response", retries=2, retry_delay_seconds=5)
 def get_ai_response(
     announcement: AnnouncementSchema,
 ) -> tuple[AnnouncementSchema, AiAnnouncementResponse]:
