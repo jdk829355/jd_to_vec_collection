@@ -60,7 +60,6 @@ def insert_announcements(data: list[tuple[AnnouncementSchema, AiAnnouncementResp
                 "created_at": announcement_schema.date,
                 "url": announcement_schema.url,
                 "summary": ai_response.summary,
-                "title_embedding": ai_response.title_embedding,
             }
         )
         for requirement in ai_response.requirements:
@@ -111,6 +110,5 @@ if __name__ == "__main__":
         position_name="백엔드 개발자",
         summary="예시회사는 혁신적인 IT 솔루션을 제공하는 선도적인 기업입니다. 백엔드 개발자로서 웹 서비스 개발 및 유지보수를 담당하게 됩니다. 주요 업무는 Python과 Django를 활용한 웹 서비스 개발이며, AWS 경험이 있는 지원자는 우대됩니다. 예시회사는 직원들의 성장과 발전을 지원하는 환경을 제공하며, 함께 혁신을 이끌어갈 인재를 찾고 있습니다.",
         requirements=["Python", "Django", "AWS"],
-        title_embedding=[0.1, 0.2, 0.3, 0.4, 0.5],
     )
     insert_announcements([(announcement_schema, ai_announcement_response)])

@@ -2,14 +2,14 @@ import asyncio
 import json
 
 from plugins.crawler.content_parser import parse_content
-from schemas.announcement_schema import AnnouncementSchema, LLMAnnouncementResponse
+from schemas.announcement_schema import AnnouncementSchema, AiAnnouncementResponse
 from google.genai import types
 import google.genai
 from dotenv import load_dotenv
 import os
 
 
-def extract_position_and_summary(announcement: AnnouncementSchema) -> LLMAnnouncementResponse:
+def extract_position_and_summary(announcement: AnnouncementSchema) -> AiAnnouncementResponse:
     client = google.genai.Client(
         api_key=os.getenv('GEMINI_API_KEY'),
     )
@@ -43,7 +43,7 @@ title: {announcement.title}
     ]
     generate_content_config = types.GenerateContentConfig(
         response_mime_type="application/json",
-        response_schema=LLMAnnouncementResponse.model_json_schema(),
+        response_schema=AiAnnouncementResponse.model_json_schema(),
     )
     result = ""
 
@@ -56,7 +56,7 @@ title: {announcement.title}
 
     result = json.loads(result)
 
-    return LLMAnnouncementResponse(**result)
+    return AiAnnouncementResponse(**result)
 
 if __name__ == "__main__":
     load_dotenv()

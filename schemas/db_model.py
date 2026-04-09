@@ -13,7 +13,6 @@ class Announcement(Base):
     created_at = Column(Date, default=datetime.utcnow)
     url = Column(String, unique=True, index=True)
     summary = Column(String)
-    title_embedding = Column(Vector())
 
 class Requirements(Base):
     __tablename__ = "REQUIREMENTS"

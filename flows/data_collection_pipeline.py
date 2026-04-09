@@ -9,7 +9,6 @@ from prefect.task_runners import ThreadPoolTaskRunner
 from schemas.announcement_schema import (
     AiAnnouncementResponse,
     AnnouncementSchema,
-    LLMAnnouncementResponse,
 )
 from more_itertools import chunked
 import asyncio
@@ -68,18 +67,12 @@ def get_ai_response(
     from plugins.position_extractor.extractor import extract_position_and_summary
     from plugins.position_extractor.skill_embedder import embed_skill
 
-    ai_announcement_response: LLMAnnouncementResponse = extract_position_and_summary(
+    ai_announcement_response: AiAnnouncementResponse = extract_position_and_summary(
         announcement
     )
-    title_embedding: List[float] = embed_skill(announcement.title)
 
     logger.info(f"Got AI response for announcement: {announcement.title}")
-    return announcement, AiAnnouncementResponse(
-        position_name=ai_announcement_response.position_name,
-        summary=ai_announcement_response.summary,
-        requirements=ai_announcement_response.requirements,
-        title_embedding=title_embedding,
-    )
+    return announcement, ai_announcement_response
 
 
 @task(name="insert to db")
